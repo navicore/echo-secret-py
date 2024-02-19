@@ -16,12 +16,13 @@ def echo():
             return jsonify({"error": "No messages provided"}), 400
 
         try:
-            # Retrieve MY_SECRET from environment variables
-            my_secret = os.getenv('MY_SECRET', 'default_secret')  # Use a default value if MY_SECRET is not set
+            my_secret = os.getenv('MY_SECRET', 'default_secret')
+            my_env_config = os.getenv('MY_ENV_CONFIG', 'default_env_config')
 
             # Insert 'secret' field into each message
             for message in messages:
                 message['secret'] = my_secret
+                message['env_config'] = my_env_config
 
             # Return the modified messages
             return jsonify({"response": messages})
