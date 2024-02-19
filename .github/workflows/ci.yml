@@ -1,0 +1,42 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: 
+    - main
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare
+        id: prepare
+        run: |
+            TAG=${GITHUB_REF##*/}
+            echo ::set-output name=tag_name::${TAG}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login do docker.io
+        if: startsWith(github.ref, 'refs/tags/')
+        run: docker login -u navicore -p ${{ secrets.DOCKER_TOKEN }}
+      - name: build and publish image
+        if: startsWith(github.ref, 'refs/tags/')
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ startsWith(github.ref, 'refs/tags/') }}
+          tags: |
+            navicore/echo-secret-py:${{ steps.prepare.outputs.tag_name }}
+            navicore/echo-secret-py:latest
